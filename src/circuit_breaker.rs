@@ -24,7 +24,7 @@ pub struct CircuitBreaker {
 }
 
 impl CircuitBreaker {
-    fn new(failure_threshold: i32, reset_timeout: Duration) -> Self {
+    pub fn new(failure_threshold: i32, reset_timeout: Duration) -> Self {
         let failure_count = 0;
         CircuitBreaker {
             shared: Arc::new(Mutex::new(SharedState {
@@ -36,7 +36,7 @@ impl CircuitBreaker {
         }
     }
 
-    fn call<P, F, R, E>(&mut self, p: P, f: F) -> Result<R, Error<E>>
+    pub fn call<P, F, R, E>(&mut self, p: P, f: F) -> Result<R, Error<E>>
     where
         F: FnOnce() -> Result<R, E>,
         P: FnOnce(&E) -> bool,
@@ -61,7 +61,7 @@ impl CircuitBreaker {
         }
     }
 
-    fn call_async<P, F>(&mut self, p: P, f: F, timeout: Option<Duration>) -> TripFuture<F, P>
+    pub fn call_async<P, F>(&mut self, p: P, f: F, timeout: Option<Duration>) -> TripFuture<F, P>
     where
         F: TryFuture,
         P: FnOnce(&F::Error) -> bool + Copy,
@@ -118,7 +118,7 @@ impl CircuitBreaker {
 }
 
 pin_project_lite::pin_project! {
-    struct TripFuture<F, P> {
+    pub struct TripFuture<F, P> {
         #[pin]
         future: F,
         predicate: P,
@@ -265,9 +265,7 @@ mod tests {
         let failure_count = 3;
         let mut cb = CircuitBreaker::new(failure_count, Duration::from_secs(1));
         for _ in 0..failure_count {
-            assert!(cb
-                .call(is_err, || Err::<(), _>(TestError::Trip))
-                .is_err());
+            assert!(cb.call(is_err, || Err::<(), _>(TestError::Trip)).is_err());
         }
 
         assert!(cb.tripped());
@@ -298,9 +296,7 @@ mod tests {
         let mut cb = CircuitBreaker::new(failure_count, reset_timeout);
 
         for _ in 0..failure_count {
-            assert!(cb
-                .call(is_err, || Err::<(), _>(TestError::Trip))
-                .is_err());
+            assert!(cb.call(is_err, || Err::<(), _>(TestError::Trip)).is_err());
         }
         assert!(cb.tripped());
 
